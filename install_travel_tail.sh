@@ -82,6 +82,12 @@ sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 # 9️⃣ Run adblock once
 sudo /usr/local/bin/update-adblock.sh || echo "Warning: adblock update failed, continuing"
 
+# Install Tailscale if not present
+if ! command -v tailscale &> /dev/null; then
+    echo "Installing Tailscale..."
+    curl -fsSL https://tailscale.com/install.sh | sh
+fi
+
 # 🔟 Tailscale setup
 read -p "Enter your Tailscale Auth Key (tskey-…): " TSKEY
 sudo tailscale up --authkey "$TSKEY" --hostname travel-tail-pi --advertise-routes=192.168.1.0/24
