@@ -64,7 +64,7 @@ EOF
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
 
-# 6️⃣ Apply NAT dynamically for this session
+# 6️⃣ Apply NAT dynamically
 echo "Applying NAT..."
 for i in {1..20}; do
     if ip link show wlan1 &>/dev/null; then
@@ -112,8 +112,8 @@ if [ -z "$NAT_IF" ]; then NAT_IF="wlan0"; fi; \
 fi
 
 # 8️⃣ Download Python scripts
-sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/sneakysniper12/travel-tail-router/main/wifi-control.py
-sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/sneakysniper12/travel-tail-router/main/update-adblock.sh
+sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/sneakysniper12/travel-tail-router-/refs/heads/main/wifi-control.py
+sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/sneakysniper12/travel-tail-router-/refs/heads/main/update-adblock.sh
 sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
 # 9️⃣ Run adblock once
