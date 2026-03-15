@@ -1,23 +1,25 @@
 #!/bin/bash
 # update-adblock.sh
-# Use tree/main URL for your repo blocklists
-BLOCKLIST_URL="https://github.com/sneakysniper12/travel-tail-router-/tree/main/blocklists.txt"
-BLOCKLIST_DIR="/etc/travel-tail"
-BLOCKLIST_FILE="$BLOCKLIST_DIR/blocklists.txt"
+# Apply adblock using cloned repo blocklist
 
-sudo mkdir -p "$BLOCKLIST_DIR"
+BLOCKLIST_FILE="/opt/travel-tail/blocklists.txt"
+LOCAL_FILE="/etc/travel-tail/blocklists.txt"
+sudo mkdir -p /etc/travel-tail
 
-if curl -fsSL "$BLOCKLIST_URL" -o "$BLOCKLIST_FILE"; then
-    echo "Adblock list updated successfully!"
+# Copy blocklist from repo
+if [ -f "$BLOCKLIST_FILE" ]; then
+    sudo cp "$BLOCKLIST_FILE" "$LOCAL_FILE"
+    echo "Blocklist copied from repo."
 else
-    echo "Warning: Could not download adblock list."
+    echo "Warning: Blocklist not found in repo."
 fi
 
-if [ -f "$BLOCKLIST_FILE" ]; then
+# Apply iptables rules
+if [ -f "$LOCAL_FILE" ]; then
     sudo iptables -F
     while read -r domain; do
         [[ "$domain" =~ ^#.*$ || -z "$domain" ]] && continue
         sudo iptables -A OUTPUT -p tcp -d "$domain" -j REJECT
-    done < "$BLOCKLIST_FILE"
+    done < "$LOCAL_FILE"
     echo "Adblock rules applied!"
 fi
