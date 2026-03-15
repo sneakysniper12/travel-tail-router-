@@ -64,7 +64,7 @@ EOF
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
 
-# 6️⃣ Apply NAT dynamically
+# 6️⃣ Apply NAT dynamically for this session
 echo "Applying NAT..."
 for i in {1..20}; do
     if ip link show wlan1 &>/dev/null; then
@@ -80,21 +80,52 @@ fi
 sudo iptables -t nat -A POSTROUTING -o "$NAT_IF" -j MASQUERADE
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
-# 7️⃣ Download Python scripts
-sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/<sneakysniper12>/travel-tail-router/main/wifi-control.py
-sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/<sneakysniper12>/travel-tail-router/main/update-adblock.sh
+# 7️⃣ Make NAT persistent across reboots via rc.local
+if [ ! -f /etc/rc.local ]; then
+    sudo tee /etc/rc.local > /dev/null <<'EOF'
+#!/bin/bash
+# Restore NAT at boot dynamically
+for i in {1..20}; do
+    if ip link show wlan1 &>/dev/null; then
+        NAT_IF="wlan1"
+        break
+    fi
+    sleep 2
+done
+if [ -z "$NAT_IF" ]; then
+    NAT_IF="wlan0"
+fi
+/sbin/iptables-restore < /etc/iptables.ipv4.nat
+exit 0
+EOF
+    sudo chmod +x /etc/rc.local
+else
+    echo "Updating existing /etc/rc.local for NAT persistence..."
+    sudo sed -i '/exit 0/i \
+for i in {1..20}; do \
+    if ip link show wlan1 &>/dev/null; then \
+        NAT_IF="wlan1"; break; \
+    fi; sleep 2; \
+done; \
+if [ -z "$NAT_IF" ]; then NAT_IF="wlan0"; fi; \
+/sbin/iptables-restore < /etc/iptables.ipv4.nat' /etc/rc.local
+fi
+
+# 8️⃣ Download Python scripts
+sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/sneakysniper12/travel-tail-router/main/wifi-control.py
+sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/sneakysniper12/travel-tail-router/main/update-adblock.sh
 sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
-# 8️⃣ Run adblock once
+# 9️⃣ Run adblock once
 sudo /usr/local/bin/update-adblock.sh || echo "Warning: adblock update failed, continuing"
 
-# 9️⃣ Prompt for Tailscale auth key
+# 🔟 Prompt for Tailscale auth key
 read -p "Enter your Tailscale Auth Key (starts with tskey-): " TSKEY
 
-# 10️⃣ Register Pi with Tailscale
+# 1️⃣1️⃣ Register Pi with Tailscale
 sudo tailscale up --authkey "$TSKEY" --hostname travel-tail-pi --advertise-routes=192.168.1.0/24
 
-# 11️⃣ Start web panel
+# 1️⃣2️⃣ Start web panel
 sudo nohup python3 /usr/local/bin/wifi-control.py >/dev/null 2>&1 &
 
 echo "=== Installation complete! ==="
