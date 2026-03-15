@@ -40,8 +40,11 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 EOF
-sudo systemctl enable hostapd
 
+# Unmask hostapd if needed
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl start hostapd
 # 4️⃣ Configure DHCP (dnsmasq)
 sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig || true
 sudo tee /etc/dnsmasq.conf > /dev/null <<EOF
