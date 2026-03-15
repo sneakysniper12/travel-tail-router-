@@ -81,8 +81,8 @@ sudo iptables -t nat -A POSTROUTING -o "$NAT_IF" -j MASQUERADE
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
 # 7️⃣ Download Python scripts
-sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/<username>/travel-tail-router/main/wifi-control.py
-sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/<username>/travel-tail-router/main/update-adblock.sh
+sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/<sneakysniper12>/travel-tail-router/main/wifi-control.py
+sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/<sneakysniper12>/travel-tail-router/main/update-adblock.sh
 sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
 # 8️⃣ Run adblock once
