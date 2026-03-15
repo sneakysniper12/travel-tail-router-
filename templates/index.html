@@ -1,1 +1,89 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Tail Router</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#111;
+    color:white;
+    margin:0;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+}
+
+button{
+    padding:10px;
+    margin:5px;
+    border:none;
+    border-radius:6px;
+    background:#2c7be5;
+    color:white;
+}
+
+input{
+    padding:10px;
+    margin:5px;
+    border-radius:6px;
+    border:none;
+}
+
+.network{
+    background:#222;
+    padding:10px;
+    margin:5px 0;
+    border-radius:6px;
+}
+
+.signal{
+    float:right;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Travel Tail Router</h1>
+
+<h3>Status</h3>
+<div>
+Router IP: 192.168.3.1<br>
+Tailscale: {{ tailscale_status }}
+</div>
+
+<hr>
+
+<h3>Connect to WiFi</h3>
+
+<form method="POST" action="/connect">
+<input name="ssid" placeholder="SSID">
+<input name="password" placeholder="Password" type="password">
+<button type="submit">Connect</button>
+</form>
+
+<button onclick="location.reload()">Refresh Scan</button>
+
+<hr>
+
+<h3>Available Networks</h3>
+
+{% for net in networks %}
+<div class="network">
+    <form method="POST" action="/connect">
+        <input type="hidden" name="ssid" value="{{net.ssid}}">
+        <strong>{{net.ssid}}</strong>
+        <span class="signal">{{net.signal}}</span><br>
+        <input name="password" placeholder="Password">
+        <button type="submit">Connect</button>
+    </form>
+</div>
+{% endfor %}
+
+</body>
+</html>
