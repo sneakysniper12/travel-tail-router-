@@ -19,15 +19,25 @@ sudo apt install -y \
 if [ ! -f /etc/sysctl.conf ]; then
     sudo touch /etc/sysctl.conf
 fi
+
 if grep -q "^net.ipv4.ip_forward=" /etc/sysctl.conf; then
     sudo sed -i 's/^net.ipv4.ip_forward=.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 else
-    echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
+    echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf > /dev/null
 fi
 sudo sysctl -w net.ipv4.ip_forward=1
 
 # 3️⃣ Configure NAT
-sudo iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
+# Check if wlan1 exists; if not, fallback to wlan0
+if ip link show wlan1 &>/dev/null; then
+    NAT_IF="wlan1"
+else
+    echo "Warning: wlan1 not found, using wlan0 for NAT"
+    NAT_IF="wlan0"
+fi
+
+sudo iptables -t nat -A POSTROUTING -o "$NAT_IF" -j MASQUERADE
+sudo mkdir -p /etc
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
 # 4️⃣ Create systemd service to restore NAT on boot
@@ -45,9 +55,14 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable iptables-restore.service
-sudo systemctl start iptables-restore.service
+# Only enable/start the service if NAT rules file exists and is not empty
+if [ -s /etc/iptables.ipv4.nat ]; then
+    sudo systemctl daemon-reload
+    sudo systemctl enable iptables-restore.service
+    sudo systemctl start iptables-restore.service
+else
+    echo "Warning: /etc/iptables.ipv4.nat is empty. NAT restore service not started."
+fi
 
 # 5️⃣ Setup hostapd hotspot
 sudo mkdir -p /etc/hostapd
@@ -62,6 +77,7 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 EOF
+
 sudo systemctl enable hostapd
 sudo systemctl enable dnsmasq
 
@@ -77,21 +93,21 @@ EOF
 sudo systemctl restart dnsmasq
 
 # 7️⃣ Download Python scripts
-sudo curl -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/<username>/travel-tail-router/main/wifi-control.py
-sudo curl -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/<username>/travel-tail-router/main/update-adblock.sh
+sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/<username>/travel-tail-router/main/wifi-control.py
+sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/<username>/travel-tail-router/main/update-adblock.sh
 sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
 # 8️⃣ Run adblock once
-sudo /usr/local/bin/update-adblock.sh
+sudo /usr/local/bin/update-adblock.sh || echo "Warning: adblock update failed, continuing"
 
 # 9️⃣ Prompt for Tailscale auth key
 read -p "Enter your Tailscale Auth Key (starts with tskey-): " TSKEY
 
 # 10️⃣ Register Pi with Tailscale
-sudo tailscale up --authkey $TSKEY --hostname travel-tail-pi --advertise-routes=192.168.1.0/24
+sudo tailscale up --authkey "$TSKEY" --hostname travel-tail-pi --advertise-routes=192.168.1.0/24
 
 # 11️⃣ Start web panel
-sudo nohup python3 /usr/local/bin/wifi-control.py &
+sudo nohup python3 /usr/local/bin/wifi-control.py >/dev/null 2>&1 &
 
 echo "=== Installation complete! ==="
 echo "Connect to SSID 'travel_tail_1' with password 'Tail_routing'"
