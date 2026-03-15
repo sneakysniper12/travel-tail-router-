@@ -27,7 +27,15 @@ else
 fi
 sudo sysctl -w net.ipv4.ip_forward=1
 
-# 3️⃣ Setup hotspot (hostapd)
+# 3️⃣ Reset hostapd to remove masked state
+echo "Resetting hostapd..."
+sudo systemctl stop hostapd || true
+sudo systemctl mask hostapd || true
+sudo apt remove --purge -y hostapd
+sudo apt install -y hostapd
+sudo systemctl unmask hostapd
+
+# 4️⃣ Setup hotspot (hostapd)
 sudo mkdir -p /etc/hostapd
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<EOF
 interface=wlan0
@@ -41,11 +49,10 @@ auth_algs=1
 ignore_broadcast_ssid=0
 EOF
 
-# Unmask hostapd if needed
-sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl start hostapd
-# 4️⃣ Configure DHCP (dnsmasq)
+
+# 5️⃣ Configure DHCP (dnsmasq)
 sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig || true
 sudo tee /etc/dnsmasq.conf > /dev/null <<EOF
 interface=wlan0
@@ -57,7 +64,7 @@ EOF
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
 
-# 5️⃣ Apply NAT dynamically
+# 6️⃣ Apply NAT dynamically
 echo "Applying NAT..."
 for i in {1..20}; do
     if ip link show wlan1 &>/dev/null; then
@@ -73,21 +80,21 @@ fi
 sudo iptables -t nat -A POSTROUTING -o "$NAT_IF" -j MASQUERADE
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
-# 6️⃣ Download Python scripts
+# 7️⃣ Download Python scripts
 sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/<username>/travel-tail-router/main/wifi-control.py
 sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/<username>/travel-tail-router/main/update-adblock.sh
 sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
-# 7️⃣ Run adblock once
+# 8️⃣ Run adblock once
 sudo /usr/local/bin/update-adblock.sh || echo "Warning: adblock update failed, continuing"
 
-# 8️⃣ Prompt for Tailscale auth key
+# 9️⃣ Prompt for Tailscale auth key
 read -p "Enter your Tailscale Auth Key (starts with tskey-): " TSKEY
 
-# 9️⃣ Register Pi with Tailscale
+# 10️⃣ Register Pi with Tailscale
 sudo tailscale up --authkey "$TSKEY" --hostname travel-tail-pi --advertise-routes=192.168.1.0/24
 
-# 10️⃣ Start web panel
+# 11️⃣ Start web panel
 sudo nohup python3 /usr/local/bin/wifi-control.py >/dev/null 2>&1 &
 
 echo "=== Installation complete! ==="
