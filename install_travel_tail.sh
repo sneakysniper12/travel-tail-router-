@@ -6,7 +6,7 @@ echo "Installing Travel Tail Router..."
 # Update & install packages
 apt update && apt upgrade -y
 apt install -y python3 python3-pip hostapd dnsmasq iw curl git
-pip3 install flask
+pip3 install --break-system-packages flask
 
 # Enable IP forwarding
 sysctl -w net.ipv4.ip_forward=1
