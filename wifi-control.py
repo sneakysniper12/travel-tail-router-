@@ -7,13 +7,10 @@ from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-# URLs for helper scripts
-ADBLOCK_SCRIPT_URL = "https://raw.githubusercontent.com/sneakysniper12/travel-tail-router-/refs/heads/main/update-adblock.sh"
-
-# Paths on the Pi
+# Use tree/main URL for your repo files
+ADBLOCK_SCRIPT_URL = "https://github.com/sneakysniper12/travel-tail-router-/tree/main/update-adblock.sh"
 ADBLOCK_SCRIPT_PATH = "/usr/local/bin/update-adblock.sh"
 
-# Function to download/update adblock script
 def update_adblock_script():
     try:
         response = requests.get(ADBLOCK_SCRIPT_URL)
@@ -25,7 +22,6 @@ def update_adblock_script():
     except Exception as e:
         print(f"Warning: Could not update adblock script: {e}")
 
-# Function to scan Wi-Fi networks
 def scan_networks():
     result = subprocess.run(["sudo", "iwlist", "wlan1", "scan"], capture_output=True, text=True)
     networks = []
@@ -35,10 +31,8 @@ def scan_networks():
             ssid = line.split(":")[1].strip('"')
             if ssid:
                 networks.append(ssid)
-    # Optional: sort by signal strength if needed
     return sorted(set(networks))
 
-# Function to connect to a Wi-Fi network
 def connect_wifi(ssid, password):
     wpa_conf = f"""
 network={{
@@ -50,7 +44,6 @@ network={{
         f.write(wpa_conf)
     subprocess.run(["sudo", "wpa_cli", "-i", "wlan1", "reconfigure"])
 
-# Flask routes
 @app.route("/")
 def index():
     networks = scan_networks()
@@ -64,7 +57,5 @@ def connect():
     return redirect("/")
 
 if __name__ == "__main__":
-    # Update adblock at startup
     update_adblock_script()
-    # Start Flask server
     app.run(host="0.0.0.0", port=80)
