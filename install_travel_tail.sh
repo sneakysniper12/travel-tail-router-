@@ -19,7 +19,6 @@ sudo apt install -y \
 if [ ! -f /etc/sysctl.conf ]; then
     sudo touch /etc/sysctl.conf
 fi
-
 if grep -q "^net.ipv4.ip_forward=" /etc/sysctl.conf; then
     sudo sed -i 's/^net.ipv4.ip_forward=.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 else
@@ -44,7 +43,8 @@ sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 sudo tee /etc/systemd/system/iptables-restore.service > /dev/null <<'EOF'
 [Unit]
 Description=Restore iptables rules
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=oneshot
@@ -55,7 +55,7 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-# Only enable/start the service if NAT rules file exists and is not empty
+# Validate NAT rules file before starting service
 if [ -s /etc/iptables.ipv4.nat ]; then
     sudo systemctl daemon-reload
     sudo systemctl enable iptables-restore.service
@@ -77,7 +77,6 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 EOF
-
 sudo systemctl enable hostapd
 sudo systemctl enable dnsmasq
 
