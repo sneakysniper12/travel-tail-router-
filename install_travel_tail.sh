@@ -8,10 +8,15 @@ apt update && apt upgrade -y
 apt install -y python3 python3-pip hostapd dnsmasq iw curl git
 sudo apt install -y python3-flask
 
-# Enable IP forwarding
-sysctl -w net.ipv4.ip_forward=1
-sed -i '/^#net.ipv4.ip_forward=1/c\net.ipv4.ip_forward=1' /etc/sysctl.conf
+# Ensure sysctl.conf exists
+sudo touch /etc/sysctl.conf
 
+# Enable IP forwarding
+sudo sed -i '/^#net.ipv4.ip_forward=1/c\net.ipv4.ip_forward=1' /etc/sysctl.conf || \
+echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
+
+# Apply immediately
+sudo sysctl -w net.ipv4.ip_forward=1
 # NAT
 iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
 sh -c "iptables-save > /etc/iptables.ipv4.nat"
