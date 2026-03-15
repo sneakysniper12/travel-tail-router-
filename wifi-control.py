@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
 import os
 import subprocess
-import requests
 import time
 from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-# Use tree/main URL for your repo files
-ADBLOCK_SCRIPT_URL = "https://github.com/sneakysniper12/travel-tail-router-/tree/main/update-adblock.sh"
+# Paths
 ADBLOCK_SCRIPT_PATH = "/usr/local/bin/update-adblock.sh"
 
+# Update adblock script if it exists in the cloned repo
 def update_adblock_script():
-    try:
-        response = requests.get(ADBLOCK_SCRIPT_URL)
-        response.raise_for_status()
-        with open(ADBLOCK_SCRIPT_PATH, "wb") as f:
-            f.write(response.content)
-        os.chmod(ADBLOCK_SCRIPT_PATH, 0o755)
-        print("Adblock script updated successfully!")
-    except Exception as e:
-        print(f"Warning: Could not update adblock script: {e}")
+    repo_script = "/opt/travel-tail/update-adblock.sh"
+    if os.path.isfile(repo_script):
+        try:
+            subprocess.run(["sudo", "cp", repo_script, ADBLOCK_SCRIPT_PATH], check=True)
+            subprocess.run(["sudo", "chmod", "+x", ADBLOCK_SCRIPT_PATH], check=True)
+            print("Adblock script updated from repo!")
+        except Exception as e:
+            print(f"Warning: Could not update adblock script: {e}")
+    else:
+        print("Warning: Adblock script not found in repo")
 
+# Scan available networks on wlan1
 def scan_networks():
     result = subprocess.run(["sudo", "iwlist", "wlan1", "scan"], capture_output=True, text=True)
     networks = []
@@ -33,6 +34,7 @@ def scan_networks():
                 networks.append(ssid)
     return sorted(set(networks))
 
+# Connect to Wi-Fi
 def connect_wifi(ssid, password):
     wpa_conf = f"""
 network={{
@@ -44,6 +46,7 @@ network={{
         f.write(wpa_conf)
     subprocess.run(["sudo", "wpa_cli", "-i", "wlan1", "reconfigure"])
 
+# Flask routes
 @app.route("/")
 def index():
     networks = scan_networks()
