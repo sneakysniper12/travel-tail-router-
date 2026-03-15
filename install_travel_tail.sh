@@ -19,6 +19,7 @@ sudo apt install -y \
 if [ ! -f /etc/sysctl.conf ]; then
     sudo touch /etc/sysctl.conf
 fi
+
 if grep -q "^net.ipv4.ip_forward=" /etc/sysctl.conf; then
     sudo sed -i 's/^net.ipv4.ip_forward=.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 else
@@ -27,7 +28,7 @@ fi
 sudo sysctl -w net.ipv4.ip_forward=1
 
 # 3️⃣ Configure NAT
-# Check if wlan1 exists; if not, fallback to wlan0
+# Use wlan1 if available, otherwise fallback to wlan0
 if ip link show wlan1 &>/dev/null; then
     NAT_IF="wlan1"
 else
@@ -39,30 +40,34 @@ sudo iptables -t nat -A POSTROUTING -o "$NAT_IF" -j MASQUERADE
 sudo mkdir -p /etc
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
-# 4️⃣ Create systemd service to restore NAT on boot
-sudo tee /etc/systemd/system/iptables-restore.service > /dev/null <<'EOF'
+# 4️⃣ Create systemd service that waits for interface before restoring NAT
+sudo tee /etc/systemd/system/iptables-wait-restore.service > /dev/null <<'EOF'
 [Unit]
-Description=Restore iptables rules
-Wants=network-online.target
-After=network-online.target
+Description=Restore iptables NAT once interface exists
+After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/iptables-restore < /etc/iptables.ipv4.nat
+ExecStart=/bin/bash -c '
+for i in {1..20}; do
+  if ip link show wlan1 &>/dev/null; then
+    /sbin/iptables-restore < /etc/iptables.ipv4.nat
+    exit 0
+  fi
+  sleep 2
+done
+echo "Warning: wlan1 never appeared, NAT rules not applied"
+exit 0
+'
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Validate NAT rules file before starting service
-if [ -s /etc/iptables.ipv4.nat ]; then
-    sudo systemctl daemon-reload
-    sudo systemctl enable iptables-restore.service
-    sudo systemctl start iptables-restore.service
-else
-    echo "Warning: /etc/iptables.ipv4.nat is empty. NAT restore service not started."
-fi
+sudo systemctl daemon-reload
+sudo systemctl enable iptables-wait-restore.service
+sudo systemctl start iptables-wait-restore.service
 
 # 5️⃣ Setup hostapd hotspot
 sudo mkdir -p /etc/hostapd
