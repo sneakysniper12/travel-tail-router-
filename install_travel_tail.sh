@@ -111,9 +111,9 @@ if [ -z "$NAT_IF" ]; then NAT_IF="wlan0"; fi; \
 /sbin/iptables-restore < /etc/iptables.ipv4.nat' /etc/rc.local
 fi
 
-# 8️⃣ Download Python scripts
-sudo curl -fsSL -o /usr/local/bin/wifi-control.py https://raw.githubusercontent.com/sneakysniper12/travel-tail-router-/refs/heads/main/wifi-control.py
-sudo curl -fsSL -o /usr/local/bin/update-adblock.sh https://raw.githubusercontent.com/sneakysniper12/travel-tail-router-/refs/heads/main/update-adblock.sh
+# 8️⃣ Download Python scripts from your GitHub (tree/main)
+sudo curl -fsSL "https://github.com/sneakysniper12/travel-tail-router-/tree/main/wifi-control.py" -o /usr/local/bin/wifi-control.py
+sudo curl -fsSL "https://github.com/sneakysniper12/travel-tail-router-/tree/main/update-adblock.sh" -o /usr/local/bin/update-adblock.sh
 sudo chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
 # 9️⃣ Run adblock once
