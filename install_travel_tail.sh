@@ -40,8 +40,18 @@ sudo apt install -y iptables
 # NAT
 sudo iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
-if ! grep -q "iptables-restore" /etc/rc.local; then
-  sed -i '/exit 0/i iptables-restore < /etc/iptables.ipv4.nat' /etc/rc.local
+# Ensure /etc/rc.local exists
+if [ ! -f /etc/rc.local ]; then
+    sudo tee /etc/rc.local > /dev/null <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+    sudo chmod +x /etc/rc.local
+fi
+
+# Insert iptables restore before 'exit 0' if not already present
+if ! grep -q "iptables-restore < /etc/iptables.ipv4.nat" /etc/rc.local; then
+    sudo sed -i '/exit 0/i iptables-restore < /etc/iptables.ipv4.nat' /etc/rc.local
 fi
 
 # hostapd
