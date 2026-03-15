@@ -18,3 +18,14 @@ Run this on a fresh Raspberry Pi OS Lite:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/<sneakysniper12>/travel-tail-router/main/install_travel_tail.sh | sudo bash
+
+
+Then connect to:
+
+SSID: travel_tail_1
+Password: Tail_routing
+
+Open the web panel:
+
+http://192.168.3.1
+
