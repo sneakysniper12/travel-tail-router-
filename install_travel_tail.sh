@@ -4,7 +4,18 @@ set -e
 echo "Installing Travel Tail Router..."
 
 # Update & install packages
-apt update && apt upgrade -y
+sudo apt update && apt upgrade -y
+sudo apt install -y \
+    python3-flask \
+    iptables \
+    hostapd \
+    dnsmasq \
+    iw \
+    curl \
+    git \
+    sudo \
+    net-tools
+
 apt install -y python3 python3-pip hostapd dnsmasq iw curl git
 sudo apt install -y python3-flask
 
@@ -27,8 +38,8 @@ echo "Installing iptables..."
 sudo apt install -y iptables
 
 # NAT
-iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
-sh -c "iptables-save > /etc/iptables.ipv4.nat"
+sudo iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
+sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
 if ! grep -q "iptables-restore" /etc/rc.local; then
   sed -i '/exit 0/i iptables-restore < /etc/iptables.ipv4.nat' /etc/rc.local
 fi
