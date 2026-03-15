@@ -12,6 +12,17 @@ DIY portable Raspberry Pi travel router:
 - Router watchdog for self-healing
 - Lightweight ad-blocking
 
+
+# after the install
+connect to:
+SSID: travel_tail_1
+Password: Tail_routing
+
+open the web panel:
+http://192.168.3.1
+
+
+
 ## One-Command Install
 
 Run this on a fresh Raspberry Pi OS Lite:
@@ -19,12 +30,4 @@ Run this on a fresh Raspberry Pi OS Lite:
 ```bash
 curl -sSL https://raw.githubusercontent.com/<sneakysniper12>/travel-tail-router/main/install_travel_tail.sh | sudo bash
 
-
-# next
-connect to:
-SSID: travel_tail_1
-Password: Tail_routing
-
-open the web panel:
-http://192.168.3.1
 
