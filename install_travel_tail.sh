@@ -1,12 +1,9 @@
-
-
-```bash
 #!/bin/bash
 set -e
 
 echo "Installing Travel Tail Router..."
 
-# Update & install
+# Update & install packages
 apt update && apt upgrade -y
 apt install -y python3 python3-pip hostapd dnsmasq iw curl git
 pip3 install flask
@@ -46,6 +43,12 @@ chmod +x /usr/local/bin/wifi-control.py /usr/local/bin/update-adblock.sh
 
 # Run adblock
 /usr/local/bin/update-adblock.sh
+
+# Prompt for Tailscale Auth Key
+read -p "Enter your Tailscale Auth Key (starts with tskey-): " TSKEY
+
+# Register Pi with Tailscale headless
+sudo tailscale up --authkey $TSKEY --hostname travel-tail-pi --advertise-routes=192.168.1.0/24
 
 # Start web panel
 nohup python3 /usr/local/bin/wifi-control.py &
