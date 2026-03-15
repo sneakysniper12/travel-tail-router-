@@ -23,6 +23,9 @@ fi
 # Apply immediately
 sudo sysctl -w net.ipv4.ip_forward=1
 
+echo "Installing iptables..."
+sudo apt install -y iptables
+
 # NAT
 iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
 sh -c "iptables-save > /etc/iptables.ipv4.nat"
